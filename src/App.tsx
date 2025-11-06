@@ -1,68 +1,65 @@
-import React, { useState } from 'react';
-import { Heart } from 'lucide-react';
-import HealthCheck from './components/HealthCheck';
-import api from './lib/api';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Heart, Calendar, Pill } from 'lucide-react';
+import Dashboard from './pages/Dashboard';
+import Medications from './pages/Medications';
 
-interface HealthStatus {
-  status: string;
-  service: string;
-  version: string;
-  timestamp: string;
-  message: string;
-}
+const NavBar: React.FC = () => {
+  const location = useLocation();
 
-const App: React.FC = () => {
-  const [healthData, setHealthData] = useState<HealthStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const checkHealth = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get('/api/health/');
-      setHealthData(response.data);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to backend';
-      setError(errorMessage);
-      setHealthData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const navItems = [
+    { path: '/', label: 'Dashboard', icon: Calendar },
+    { path: '/medications', label: 'Moje leki', icon: Pill },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Heart className="h-8 w-8 text-red-500" />
-            <h1 className="text-3xl font-bold text-gray-900">MediMinder</h1>
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center space-x-2">
+            <Heart className="h-6 w-6 text-red-500" />
+            <span className="text-xl font-bold text-gray-900">MediMinder</span>
+          </Link>
+          
+          <div className="flex space-x-4">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center space-x-1 px-4 py-2 rounded-lg transition ${
+                    isActive
+                      ? 'bg-blue-100 text-blue-700 font-semibold'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Aplikacja do monitorowania leczenia i suplementacji z funkcją przypominania o dawkach
-          </p>
-        </div>
-
-        {/* Health Check Component */}
-        <div className="flex justify-center">
-          <HealthCheck
-            healthData={healthData}
-            isLoading={isLoading}
-            error={error}
-            onCheckHealth={checkHealth}
-          />
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-12 text-gray-500 text-sm">
-          <p>MediMinder Frontend - Połączony z backendem Django</p>
-          <p className="mt-1">API URL: {import.meta.env.VITE_API_URL || 'http://localhost:8000'}</p>
         </div>
       </div>
-    </div>
+    </nav>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <main>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/medications" element={<Medications />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 };
 
